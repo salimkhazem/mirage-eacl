@@ -1,0 +1,29 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+.DS_Store
+
+# Large or machine-specific artefacts. The toy ledger and figures ARE tracked,
+# because they are the reproducibility evidence; response tensors and model
+# caches are not.
+results/tensors/
+data/cache/
+*.safetensors
+*.bin
+*.pt
+paper/**/*.aux
+paper/**/*.log
+paper/**/*.out
+paper/**/*.fls
+paper/**/*.fdb_latexmk
+paper/**/*.synctex.gz
+paper/*.pdf
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/figures/*.png
+paper/main.pdf
