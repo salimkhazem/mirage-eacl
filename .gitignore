@@ -15,15 +15,3 @@ data/cache/
 *.safetensors
 *.bin
 *.pt
-paper/**/*.aux
-paper/**/*.log
-paper/**/*.out
-paper/**/*.fls
-paper/**/*.fdb_latexmk
-paper/**/*.synctex.gz
-paper/*.pdf
-paper/*.aux
-paper/*.bbl
-paper/*.blg
-paper/figures/*.png
-paper/main.pdf
