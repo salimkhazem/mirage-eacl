@@ -1,0 +1,192 @@
+# The "examinees".
+#
+# Selection is driven by one measured fact: se(delta_hat) ~ (sum_m p(1-p))^(-1/2),
+# so drift precision is bounded by the number of *models*, not items. The grid is
+# therefore as wide as the hardware allows, and deliberately spans a large ability
+# range -- base/instruct pairs of the same checkpoint are included precisely because
+# they differ in ability while holding architecture and tokenizer fixed.
+#
+# Tier 1  smoke test, one small cached model.
+# Tier 2  the core grid: every model whose weights are already in the local HF
+#         cache, so the run starts with zero download.
+# Tier 3  small extra downloads that widen the low end and add the European arm.
+#
+# All tier-2 entries fit bf16 on a 32 GB RTX 5000 Ada; the largest (gemma-2-9b,
+# ~18.5 GB) also fits, so no quantisation is used anywhere. Quantisation would
+# perturb ability in a language-dependent way and contaminate the very estimand
+# this paper is about.
+
+defaults:
+  dtype: bfloat16
+  trust_remote_code: false
+  batch_size: 32
+  # 4096, not 2048. At 2048 the engine rejected prompts over the limit, and the
+  # rejections were concentrated in Tamil, Bengali, Hindi and Greek -- exactly the
+  # high-fertility, non-Latin-script languages that also show the largest gaps.
+  # Dropping those shards would have selected the sample on the outcome. The
+  # episode is itself an instance of the paper's theme: a fixed token budget is
+  # not a language-neutral experimental control.
+  max_model_len: 8192
+
+models:
+
+  # --- tier 1 -----------------------------------------------------------------
+  - name: llama-3.2-1b
+    hf_id: meta-llama/Llama-3.2-1B-Instruct
+    revision: main
+    tier: 1
+    params_b: 1.24
+    cached: true
+
+  # --- tier 2: cached, no download --------------------------------------------
+  - name: llama-3.2-1b-base
+    hf_id: meta-llama/Llama-3.2-1B
+    revision: main
+    tier: 2
+    params_b: 1.24
+    cached: true
+  - name: qwen2.5-1.5b-base
+    hf_id: Qwen/Qwen2.5-1.5B
+    revision: main
+    tier: 2
+    params_b: 1.54
+    cached: true
+  - name: qwen2.5-1.5b
+    hf_id: Qwen/Qwen2.5-1.5B-Instruct
+    revision: main
+    tier: 2
+    params_b: 1.54
+    cached: true
+  - name: gemma-2-2b-base
+    hf_id: google/gemma-2-2b
+    revision: main
+    tier: 2
+    params_b: 2.61
+    cached: true
+  - name: gemma-2-2b
+    hf_id: google/gemma-2-2b-it
+    revision: main
+    tier: 2
+    params_b: 2.61
+    cached: true
+  - name: qwen2.5-3b
+    hf_id: Qwen/Qwen2.5-3B-Instruct
+    revision: main
+    tier: 2
+    params_b: 3.09
+    cached: true
+  - name: llama-3.2-3b
+    hf_id: meta-llama/Llama-3.2-3B-Instruct
+    revision: main
+    tier: 2
+    params_b: 3.21
+    cached: true
+  - name: phi-3.5-mini
+    hf_id: microsoft/Phi-3.5-mini-instruct
+    revision: main
+    tier: 2
+    params_b: 3.82
+    cached: true
+  - name: qwen3-4b
+    hf_id: Qwen/Qwen3-4B
+    revision: main
+    tier: 2
+    params_b: 4.02
+    cached: true
+  - name: qwen3-4b-2507
+    hf_id: Qwen/Qwen3-4B-Instruct-2507
+    revision: main
+    tier: 2
+    params_b: 4.02
+    cached: true
+  - name: gemma-3-4b
+    hf_id: google/gemma-3-4b-it
+    revision: main
+    tier: 2
+    params_b: 4.30
+    cached: true
+  - name: mistral-7b-base
+    hf_id: mistralai/Mistral-7B-v0.3
+    revision: main
+    tier: 2
+    params_b: 7.25
+    cached: true
+  - name: mistral-7b
+    hf_id: mistralai/Mistral-7B-Instruct-v0.3
+    revision: main
+    tier: 2
+    params_b: 7.25
+    cached: true
+  - name: qwen2.5-7b
+    hf_id: Qwen/Qwen2.5-7B-Instruct
+    revision: main
+    tier: 2
+    params_b: 7.62
+    cached: true
+  - name: deepseek-r1-qwen-7b
+    hf_id: deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
+    revision: main
+    tier: 2
+    params_b: 7.62
+    cached: true
+  - name: llama-3.1-8b
+    hf_id: meta-llama/Llama-3.1-8B-Instruct
+    revision: main
+    tier: 2
+    params_b: 8.03
+    cached: true
+  - name: qwen3-8b
+    hf_id: Qwen/Qwen3-8B
+    revision: main
+    tier: 2
+    params_b: 8.19
+    cached: true
+  - name: gemma-2-9b
+    hf_id: google/gemma-2-9b-it
+    revision: main
+    tier: 2
+    params_b: 9.24
+    cached: true
+
+  # --- tier 3: small downloads ------------------------------------------------
+  # The low end matters: IRT estimates item difficulty best when some examinees
+  # actually fail the easy items. The cached grid bottoms out at 1.2B, which is
+  # still fairly strong on Belebele, so these three widen the range cheaply.
+  - name: qwen2.5-0.5b
+    hf_id: Qwen/Qwen2.5-0.5B-Instruct
+    revision: main
+    tier: 3
+    params_b: 0.49
+    batch_size: 64
+  - name: qwen3-0.6b
+    hf_id: Qwen/Qwen3-0.6B
+    revision: main
+    tier: 3
+    params_b: 0.60
+    batch_size: 64
+  - name: bloom-560m
+    hf_id: bigscience/bloom-560m
+    revision: main
+    tier: 3
+    params_b: 0.56
+    batch_size: 64
+
+  # The European arm: EACL-relevant, and these models have very different
+  # language coverage from the Qwen/Llama families, which is exactly the kind of
+  # variation that makes cross-model drift contrasts informative.
+  - name: eurollm-1.7b
+    hf_id: utter-project/EuroLLM-1.7B-Instruct
+    revision: main
+    tier: 3
+    params_b: 1.66
+  - name: salamandra-2b
+    hf_id: BSC-LT/salamandra-2b-instruct
+    revision: main
+    tier: 3
+    params_b: 2.25
+  - name: teuken-7b
+    hf_id: openGPT-X/Teuken-7B-instruct-research-v0.4
+    revision: main
+    tier: 3
+    params_b: 7.45
+    trust_remote_code: true
