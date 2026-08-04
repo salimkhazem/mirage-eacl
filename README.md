@@ -5,7 +5,7 @@
 Multilingual evaluation routinely reports that a model “loses _X_ points” when moving from a source language to a target language. That observed score drop is
 real, but its usual interpretation is not automatic: it combines a change in model ability with any change in item difficulty introduced by translation.
 
-MIRAGE formalizes this ambiguity. It shows that the cross-lingual _ability_ gap is not identified from a parallel benchmark—even when every model answers every item in every language. The repository provides the theory, estimators, simulation checks, empirical analyses, robustness studies, and manuscript
+MIRAGE formalizes this ambiguity. It shows that the cross-lingual _ability_ gap is not identified from a parallel benchmark even when every model answers every item in every language. The repository provides the theory, estimators, simulation checks, empirical analyses, robustness studies, and manuscript
 artifacts supporting that result.
 
 ## What the data can and cannot identify
