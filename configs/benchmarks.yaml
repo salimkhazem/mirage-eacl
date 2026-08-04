@@ -1,0 +1,217 @@
+# All nine benchmarks. Every entry is pinned by revision and carries a
+# deterministic item cap.
+#
+# On item caps: IRT parameter precision is bounded by the number of *models* per
+# cell, not items -- se(delta_hat) ~ (sum_m p(1-p))^(-1/2). Capping items at ~2k
+# costs almost nothing in precision and is what makes the full nine-benchmark
+# grid fit the compute budget. The cap is applied by a seeded, stratified,
+# deterministic subsample (see mirage.data.loaders.subsample), recorded in the
+# manifest, and identical across every model and language so the design stays
+# perfectly crossed.
+#
+# `verified: false` means the HF coordinates still need checking by
+# `python -m scripts.download --verify-only`. Never cite a benchmark whose entry
+# is still unverified.
+
+defaults:
+  split: test
+  source_language: en
+  max_items: 2000
+  subsample_seed: 20260803
+
+benchmarks:
+
+  belebele:
+    hf_id: facebook/belebele
+    revision: main
+    verified: true
+    task: multiple_choice
+    n_options: 4
+    max_items: null                 # 900 items: keep whole
+    item_id_field: [link, question_number]  # question_number alone has 2 values
+    config_is_language: true
+    languages: [eng_Latn, fra_Latn, deu_Latn, spa_Latn, ita_Latn, por_Latn,
+                nld_Latn, pol_Latn, ces_Latn, ron_Latn, ell_Grek, bul_Cyrl,
+                rus_Cyrl, ukr_Cyrl, fin_Latn, hun_Latn, est_Latn, lvs_Latn,
+                tur_Latn, arb_Arab, heb_Hebr, hin_Deva, ben_Beng, tam_Taml,
+                zho_Hans, jpn_Jpan, kor_Hang, swh_Latn, yor_Latn, isl_Latn]
+    source_language: eng_Latn
+    fields:
+      question: question
+      context: flores_passage
+      options: [mc_answer1, mc_answer2, mc_answer3, mc_answer4]
+      answer: correct_answer_num
+      answer_base: 1
+    notes: >-
+      The cleanest fully crossed design in NLP: identical 900 items in every
+      variant. Published per-language numbers: Belebele, ACL 2024
+      (arXiv:2308.16884), Tables 2 and 4-6.
+
+  global_mmlu:
+    hf_id: CohereLabs/Global-MMLU
+    revision: main
+    verified: false
+    task: multiple_choice
+    n_options: 4
+    max_items: 2000
+    item_id_field: sample_id
+    config_is_language: true
+    # ta, ml, th, my have no config on this revision -- verified 2026-07-30.
+    languages: [en, fr, de, es, it, pt, nl, pl, cs, ro, el, ru, uk, lt,
+                tr, ar, he, fa, hi, bn, te, ne, si, sw, yo, ig,
+                ha, am, zh, ja, ko, vi, id, ms, fil, ky, mg, sr]
+    fields:
+      question: question
+      options: [option_a, option_b, option_c, option_d]
+      answer: answer                # letter A-D
+    strata:
+      # The natural experiment. These labels are external to the response data,
+      # so they validate the latent DIF construct rather than merely fitting it.
+      cultural_sensitivity: cultural_sensitivity_label   # CS / CA
+    notes: >-
+      Ships machine-translated and human-post-edited arms plus CS/CA
+      annotations on 2850 items per language (arXiv:2412.03304). Theory
+      predicts larger drift dispersion on MT and on CS items.
+
+  global_mmlu_lite:
+    hf_id: CohereLabs/Global-MMLU-Lite
+    revision: main
+    verified: false
+    task: multiple_choice
+    n_options: 4
+    max_items: null                 # 400 x 2 arms
+    item_id_field: sample_id
+    config_is_language: true
+    # nl, pl, vi have no config on this revision -- verified 2026-07-30.
+    languages: [en, fr, de, es, it, pt, cs, ar, hi, bn, zh, ja, ko, id, sw]
+    fields:
+      question: question
+      options: [option_a, option_b, option_c, option_d]
+      answer: answer
+    notes: Fully human-translated control arm for the Global-MMLU comparison.
+
+  xnli:
+    hf_id: facebook/xnli
+    revision: main
+    verified: true
+    task: multiple_choice
+    n_options: 3
+    max_items: 2000
+    item_id_field: __row_index__    # XNLI is parallel by row order
+    config_is_language: true
+    languages: [en, fr, de, es, el, bg, ru, tr, ar, vi, th, zh, hi, sw, ur]
+    fields:
+      premise: premise
+      hypothesis: hypothesis
+      answer: label                 # 0 entail / 1 neutral / 2 contradict
+      answer_base: 0
+    notes: Classic parallel NLI; very large published-baseline surface.
+
+  xcopa:
+    hf_id: cambridgeltl/xcopa
+    revision: main
+    verified: true
+    task: multiple_choice
+    n_options: 2
+    max_items: null                 # 500 items
+    item_id_field: idx
+    config_is_language: true
+    languages: [et, ht, id, it, qu, sw, ta, th, tr, vi, zh]
+    # XCOPA ships no English config: every version is a translation of COPA.
+    # Italian is used as the reference so delta is measured relative to it. This
+    # is not a defect for MIRAGE -- Theorem 1 says the reference choice is
+    # arbitrary and unidentified anyway; it only means XCOPA gaps are explicitly
+    # relative-to-Italian rather than nominally relative-to-source.
+    source_language: it
+    english_source:
+      hf_id: pkavumba/balanced-copa
+      revision: main
+      verified: false
+    fields:
+      premise: premise
+      question: question            # cause / effect
+      options: [choice1, choice2]
+      answer: label
+      answer_base: 0
+    notes: >-
+      Low-resource causal commonsense. Note the source-language wrinkle: XCOPA
+      has no `en` config, so English must come from COPA itself. Flagged
+      because the source language anchors delta = 0 in the model.
+
+  xstorycloze:
+    hf_id: juletxara/xstory_cloze
+    revision: main
+    verified: false
+    task: multiple_choice
+    n_options: 2
+    split: eval
+    max_items: null                 # 1511 items
+    item_id_field: story_id
+    config_is_language: true
+    languages: [en, ru, zh, es, ar, hi, id, te, sw, eu, my]
+    fields:
+      context: [input_sentence_1, input_sentence_2, input_sentence_3, input_sentence_4]
+      options: [sentence_quiz1, sentence_quiz2]
+      answer: answer_right_ending
+      answer_base: 1
+    notes: Narrative completion; adds a non-QA task format to the grid.
+
+  mgsm:
+    hf_id: juletxara/mgsm
+    revision: main
+    verified: false
+    task: generative            # NOT multiple choice: scored by answer match
+    max_items: null             # 250 items
+    item_id_field: __row_index__
+    config_is_language: true
+    languages: [en, es, fr, de, ru, zh, ja, th, sw, bn, te]
+    fields:
+      question: question
+      answer: answer_number
+    generation:
+      max_new_tokens: 256
+      temperature: 0.0
+    cost_warning: >-
+      Generative decoding, so roughly 10x the cost per item of the MCQ
+      benchmarks despite having only 250 items. Run last; drop first if the
+      budget slips. Its role is to show the model class is not an artefact of
+      multiple-choice scoring.
+
+  mmlu_prox:
+    hf_id: li-lab/MMLU-ProX
+    revision: main
+    verified: false
+    task: multiple_choice
+    n_options: 10
+    max_items: 2000
+    item_id_field: question_id
+    config_is_language: true
+    # The 29 configs that exist on this revision -- verified 2026-07-30.
+    # nl, pl, sv, he, tr, el, fa are NOT available despite appearing in the
+    # paper's language table.
+    languages: [af, ar, bn, cs, de, en, es, fr, hi, hu, id, it, ja, ko,
+                mr, ne, pt, ru, sr, sw, te, th, uk, ur, vi, wo, yo, zh, zu]
+    fields:
+      question: question
+      options: [option_0, option_1, option_2, option_3, option_4,
+                option_5, option_6, option_7, option_8, option_9]
+      answer: answer_index
+      answer_base: 0
+    notes: >-
+      Direct comparison surface with Multilingual-IRT (arXiv:2606.15643), which
+      fits 25 LLMs x 29 languages here. Published gaps "up to 24.3%"
+      (arXiv:2503.10497).
+
+  global_piqa:
+    hf_id: null                     # resolve before use
+    revision: null
+    verified: false
+    task: multiple_choice
+    n_options: 2
+    max_items: 2000
+    config_is_language: true
+    languages: []
+    notes: >-
+      Global-PIQA, arXiv:2510.24081, 100+ languages and cultures. Stretch goal:
+      the HF coordinates are not yet resolved, so this benchmark is excluded
+      from the core grid until `--verify-only` passes.
